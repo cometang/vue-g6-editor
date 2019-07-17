@@ -50,6 +50,7 @@
     import G6 from '@antv/g6';
     export default {
         name: "test1",
+
         data(){
             return{
                 graph:'',
@@ -245,7 +246,7 @@
                         this.addingEdge = false
                     }
                 }
-            });
+            })
             G6.registerBehavior('activate-node', {
                 getDefaultCfg() {
                     return {
@@ -292,7 +293,7 @@
                        this.graph.setItemState(node, 'active', false);
                     });
                 }
-            });
+            })
 
 
 
@@ -300,7 +301,7 @@
                 nodes: [],
 
                 edges: []
-            };
+            }
 
             const graph = new G6.Graph({
                 container: 'mountNode',
@@ -322,8 +323,8 @@
                 },
             });
 
-            graph.data(data);
-            graph.render();
+            graph.data(data)
+            graph.render()
             graph.setMode('default')
 
             this.graph = graph
