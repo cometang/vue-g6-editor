@@ -476,8 +476,8 @@
 
             const graph = new G6.Graph({
                 container: 'canvasBox',
-                width:  document.body.clientWidth-520,
-                height:  document.body.clientHeight-120,
+                width:  document.body.clientWidth-540,
+                height:  document.body.clientHeight-140,
                 modes: {
                     default: ['click-add-node', 'click-select','click-add-edge','drag-node','activate-node'],        //'click-add-edge' 新增先的behiver
                 },

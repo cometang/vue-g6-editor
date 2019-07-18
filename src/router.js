@@ -4,7 +4,7 @@ import home from './views/home'
 
 const test = () => import('./views/test')
 const test1 =()=> import('./views/test1')
-
+const formDesign =()=>import('./views/formDesign')
 
 Vue.use(Router)
 
@@ -16,6 +16,11 @@ export default new Router({
             path: '/',
             name: 'home',
             component: home
+        },
+        {
+            path:'/formDesign',
+            name:'formDesign',
+            component:formDesign
         },
         {
             path: '/test',
