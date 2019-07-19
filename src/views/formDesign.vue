@@ -41,19 +41,25 @@
 
                                             <td>
                                                 <el-button type="primary" size="mini" @click="checkDataBtn(index)">编辑</el-button>
+                                                <el-button type="danger" size="mini" @click="delDataBtn(index)" style="margin-left: 20px">删除</el-button>
                                             </td>
                                         </tr>
                                     </tbody>
 
 
                                 </table>
+
+                            </div>
+                            <div class="form-table-btn">
+                                <el-button type="primary" size="small" @click="saveBtn" style="width: 20%">提交数据配置</el-button>
                             </div>
                         </div>
                         <div class="menu-box" ref="menuBox">
                             <div class="menu-title">
                                 <span style="margin-left: 20px">字段配置</span>
                                 <el-button type="primary" icon="el-icon-plus" size="mini"
-                                           style="float: right;margin-right: 20px">新增字段
+                                           style="float: right;margin-right: 20px"
+                                            @click="addFiledBtn">新增字段
                                 </el-button>
                             </div>
                             <div :style="menuForm" class="menu-form">
@@ -70,12 +76,6 @@
                                             <el-radio label="1"> 非必填</el-radio>
                                         </el-radio-group>
                                     </el-form-item>
-                                    <el-form-item label="字段类别">
-                                        <el-radio-group v-model="data.columnType">
-                                            <el-radio label="data"> 数据</el-radio>
-                                            <el-radio label="compute"> 运算</el-radio>
-                                        </el-radio-group>
-                                    </el-form-item>
                                     <el-form-item label="数据类型">
                                         <el-select v-model="data.dataType"
                                                    @change="changeDataType"
@@ -86,7 +86,23 @@
                                             </el-option>
                                         </el-select>
                                     </el-form-item>
+                                    <el-form-item label="字段类别">
+                                        <el-radio-group v-model="data.columnType">
+                                            <el-radio label="data" :disabled="data.dataType != 'int' && data.dataType != 'decimal' && data.dataType != 'money' "> 数据</el-radio>
+                                            <el-radio label="compute" :disabled="data.dataType != 'int' && data.dataType != 'decimal' && data.dataType != 'money' "> 运算</el-radio>
+                                        </el-radio-group>
+                                    </el-form-item>
+
+
+
                                     <!--根据数据类型不同 分支数据-->
+                                    <!--运算规则设置-->
+                                    <span v-if="data.columnType == 'compute'">
+                                        <el-form-item label="计算公式">
+                                            <el-button type="primary" size="mini" style="width: 100%" @click="setPormulaBtn">设置计算公式</el-button>
+                                        </el-form-item>
+                                    </span>
+
                                     <!--整型/字符串-->
                                     <span v-if="data.dataType == 'int' || data.dataType == 'string'">
                                         <el-form-item label="数据长度">
@@ -165,7 +181,7 @@
 
                                 </el-form>
                                 <div class="add-btn-box">
-                                    <el-button type="primary" @click="completeBtn" size="small">完成数据</el-button>
+                                    <el-button type="success" @click="completeBtn" size="small" style="width: 90%">完成数据</el-button>
                                 </div>
                             </div>
                         </div>
@@ -175,7 +191,39 @@
             </el-container>
         </el-container>
 
+        <el-dialog title="设置计算公式" :visible.sync="showFormula">
+            <div class="data-list-box">
+                <el-form >
+                    <el-form-item label="可选数据列" label-width="120px" >
+                        <span v-if="computeList.length >0">
+                            <el-tag v-for="(item,index) in computeList" :key="index"
+                                    class="tag-item"
+                                    style="">
+                                {{item.name}}:{{item.alias}}
+                            </el-tag>
+                        </span>
+                        <span v-else>
+                            暂无可选数据列
+                        </span>
 
+                    </el-form-item>
+                    <el-form-item label="计算符选择" label-width="120px" >
+                        <el-tag v-for="(item,index) in signList" :key="index"
+                                class="tag-sign"
+                                type="danger" size="small" >
+                            {{item}}
+                        </el-tag>
+                    </el-form-item>
+                    <el-form-item label="生成计算公式" label-width="120px" >
+
+                    </el-form-item>
+                </el-form>
+            </div>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="showFormula = false">取 消</el-button>
+                <el-button type="primary" @click="showFormula = false">确 定</el-button>
+            </div>
+        </el-dialog>
     </div>
 </template>
 
@@ -198,7 +246,7 @@
                 intRulesList: [
                     {key: 0, val: '不取整'}, {key: 1, val: '直接取整'}, {key: 2, val: '四舍五入'}, {key: 3, val: '向上取整'}, {key: 4, val: '向下取整'},
                 ],
-
+                signList:['+','-','*','/'],
                 data: {
                     name: '',              //字段名
                     alias: '',             //字段别名
@@ -218,11 +266,14 @@
                 },
                 tableData:[],
                 changeIndex:-1,
+
+                showFormula:false,
+                computeList:[],
             }
         },
         methods: {
             /** 重置变量值*/
-            resetdata(){
+            resetData(){
                 let obj = {
                     name: '',              //字段名
                     alias: '',             //字段别名
@@ -237,7 +288,7 @@
                         intRules: '',    //取整规则
                         start: '',       //开始日期
                         end: '',         //截止日期
-                        dataUnit:'',      //金额单位
+                        dataUnit:''     //金额单位
                     }
                 }
                 this.data = JSON.parse(JSON.stringify(obj))
@@ -264,6 +315,8 @@
                 this.data.rule.start = ''
                 this.data.rule.end = ''
                 this.data.rule.dataUnit = ''
+                this.data.columnType = 'data'
+                this.data.formula = ''
             },
             /** 完成字段配置 更改原表配置 进行赋值*/
             completeBtn(){
@@ -279,19 +332,19 @@
                             }
                         }
                     }
-                    if(nameKey != -1){
-                        this.$message.error('字段名不能够重复，请修改字段名')
+                    if(this.changeIndex == -1){
+                            if(nameKey != -1){
+                                this.$message.error('字段名不能够重复，请修改字段名')
+                            }else{
+                                let obj = JSON.parse(JSON.stringify(this.data))
+                                this.tableData.push(obj)
+                            }
                     }else{
-                        if(this.changeIndex == -1){
-                            let obj = JSON.parse(JSON.stringify(this.data))
-                            this.tableData.push(obj)
-                        }else{
-                            let obj = JSON.parse(JSON.stringify(this.data))
-                            this.tableData.splice(this.changeIndex,1,obj)
-                            this.changeIndex = -1
-                        }
-                        this.resetdata()
+                        let obj = JSON.parse(JSON.stringify(this.data))
+                        this.tableData.splice(this.changeIndex,1,obj)
+                        this.changeIndex = -1
                     }
+                    this.resetData()
                 }
             },
 
@@ -325,11 +378,49 @@
                 console.log(_index)
                 this.changeIndex =  _index
                 this.data = JSON.parse(JSON.stringify(this.tableData[_index]))
+            },
+
+            /** 删除一行数据*/
+            delDataBtn(_index){
+                console.log(_index)
+            },
+
+            /** 设置公式弹出层*/
+            setPormulaBtn(){
+                for(let i =0;i<this.tableData.length;i++){
+                    if(this.tableData[i].dataType == 'int' || this.tableData[i].dataType == 'decimal' || this.tableData[i].dataType == 'money'){
+                        let obj = JSON.parse(JSON.stringify(this.tableData[i]))
+                        /** 需要满足 当前字段没有成为 其他的字段中的计算公式的 子项*/
+                        this.computeList.push(obj)
+                    }
+                }
+                this.showFormula = true
+                console.log(this.computeList)
+            },
+
+            /** 新增字段*/
+            addFiledBtn(){
+                this.changeIndex = -1
+                this.resetData()
+            },
+
+            /** 保存数据配置*/
+            saveBtn(){
+
+                console.log(this.tableData)
             }
+
 
         },
         mounted() {
             this.menuForm.height = this.$refs.menuBox.offsetHeight - 30 + 'px'
+            this.tableData=[
+                { name: 'time', alias: '季度', necessary:'0', columnType: 'data', dataType: 'string', remark:'', formula:'', rule: {length: '20', decimals: '', intRules: '', start: '', end: '', dataUnit:''}},
+                {name: 'pop', alias: '单价', necessary:'0', columnType: 'data', dataType: 'decimal', remark:'', formula:'', rule: {length: '', decimals: '2', intRules: '', start: '', end: '', dataUnit:''}},
+                {name: 'sum', alias: '销售量', necessary:'0', columnType: 'data', dataType: 'int', remark:'', formula:'', rule: {length: '5', decimals: '', intRules: '', start: '', end: '', dataUnit:''}},
+                {name: 'pp', alias: '成本', necessary:'0', columnType: 'data', dataType: 'decimal', remark:'', formula:'', rule: {length: '', decimals: '2', intRules: '', start: '', end: '', dataUnit:''}},
+
+            ]
         }
     }
 </script>
@@ -419,5 +510,45 @@
         text-align: center;
     }
 
+    .form-table-btn{
+        width: auto;
+        height: 40px;
+        margin-top: 40px;
+        line-height: 40px;
+        text-align: center;
 
+    }
+
+
+    /** 计算公式弹出窗*/
+    .data-list-box{
+        width: 100%;
+    }
+    .tag-sign{
+        font-size: 16px;
+        font-weight: 600;
+        margin:10px 0 0 10px;
+        cursor:pointer;
+    }
+    .tag-sign:hover{
+        background: #f56c6c;
+        color: #fff;
+    }
+    .tag-sign:active{
+        background:#fef0f0;
+        color: #fff;
+    }
+    .tag-item{
+        margin: 10px 0 0 10px;
+        cursor:pointer;
+    }
+    .tag-item:hover{
+        background: #409EFF;
+        color: #fff;
+
+    }
+    .tag-item:active{
+        background: #d9ecff;
+        color: #fff;
+    }
 </style>
