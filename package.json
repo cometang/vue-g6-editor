@@ -10,6 +10,7 @@
   "dependencies": {
     "@antv/g": "^3.4.6",
     "@antv/g6": "^3.0.4",
+    "ahaapi": "^3.0.0",
     "core-js": "^2.6.5",
     "element-ui": "^2.10.1",
     "vue": "^2.6.10",

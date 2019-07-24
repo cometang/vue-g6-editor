@@ -5,6 +5,11 @@ import home from './views/home'
 const test = () => import('./views/test')
 const test1 =()=> import('./views/test1')
 const formDesign =()=>import('./views/formDesign')
+const flowDesign =()=>import('./views/flowDesign')
+
+
+const g6Editor =()=>import('./views/g6Editor')
+
 
 Vue.use(Router)
 
@@ -21,6 +26,16 @@ export default new Router({
             path:'/formDesign',
             name:'formDesign',
             component:formDesign
+        },
+        {
+            path:'/flowDesign',
+            name:'flowDesign',
+            component:flowDesign
+		},
+        {
+            path:'/g6Editor',
+            name:'g6Editor',
+            component:g6Editor
         },
         {
             path: '/test',

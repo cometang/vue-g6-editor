@@ -9,7 +9,13 @@
 
                         <div class="center-box" :style="centerBoxStyle">
                             <div class="form-title">
-                                <span>2019年年报数据表单</span> 配置
+                                <el-form  label-width="100px">
+                                    <el-form-item label="新建表格名称">
+                                        <el-input v-model="tableAlias" size="small" placeholder="请输入新增的表格的名称" style="width: 60%"></el-input>
+                                    </el-form-item>
+
+                                </el-form>
+
                             </div>
 
                             <div class="form-table">
@@ -37,11 +43,12 @@
                                             <td>
                                                 {{dataTypeFilter(item.dataType)}}
                                             </td>
-                                            <td>{{item.formula}}</td>
+                                            <td>{{item.computeFormula}}</td>
 
                                             <td>
                                                 <el-button type="primary" size="mini" @click="checkDataBtn(index)">编辑</el-button>
                                                 <el-button type="danger" size="mini" @click="delDataBtn(index)" style="margin-left: 20px">删除</el-button>
+                                                <el-button type="primary" size="mini" @click="formulaBtn(index)">测试计算</el-button>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -106,16 +113,16 @@
                                     <!--整型/字符串-->
                                     <span v-if="data.dataType == 'int' || data.dataType == 'string'">
                                         <el-form-item label="数据长度">
-                                            <el-input v-model="data.rule.length" size="mini"  placeholder="请输入数据长度"></el-input>
+                                            <el-input v-model="data.dataProp.length" size="mini"  placeholder="请输入数据长度"></el-input>
                                         </el-form-item>
                                     </span>
                                     <!--小数-->
                                     <span v-if="data.dataType == 'decimal'">
                                          <el-form-item label="保留位数">
-                                            <el-input v-model="data.rule.decimals" size="mini" @change="changeIntRules" placeholder="请输入小数保留位数"></el-input>
+                                            <el-input v-model="data.dataProp.decimals" size="mini" @change="changeIntRules" placeholder="请输入小数保留位数"></el-input>
                                          </el-form-item>
                                          <el-form-item label="取整规则">
-                                            <el-select v-model="data.rule.intRules"
+                                            <el-select v-model="data.dataProp.intRules"
                                                        @change="changeDecimals"
                                                        placeholder="请选择取整规则" size="mini">
                                                 <el-option
@@ -131,7 +138,7 @@
                                           <el-form-item label="起始日期">
                                                 <el-date-picker
                                                         size="mini"
-                                                        v-model="data.rule.start"
+                                                        v-model="data.dataProp.start"
                                                         type="date"
                                                         style="width: 100%"
                                                         placeholder="选择日期">
@@ -140,7 +147,7 @@
                                          <el-form-item label="截止日期">
                                                 <el-date-picker
                                                         size="mini"
-                                                        v-model="data.rule.end"
+                                                        v-model="data.dataProp.end"
                                                         type="date"
                                                         style="width: 100%"
                                                         placeholder="截止日期">
@@ -151,7 +158,7 @@
                                           <el-form-item label="起始时间">
                                                 <el-date-picker
                                                         size="mini"
-                                                        v-model="data.rule.start"
+                                                        v-model="data.dataProp.start"
                                                         type="datetime"
                                                         style="width: 100%"
                                                         placeholder="选择起始时间">
@@ -160,7 +167,7 @@
                                          <el-form-item label="截止时间">
                                                 <el-date-picker
                                                         size="mini"
-                                                        v-model="data.rule.end"
+                                                        v-model="data.dataProp.end"
                                                         type="datetime"
                                                         style="width: 100%"
                                                         placeholder="选择截止时间">
@@ -169,7 +176,7 @@
                                     </span>
                                     <span v-if="data.dataType == 'money'">
                                         <el-form-item label="金额单位">
-                                            <el-input v-model="data.rule.dataUnit" size="mini"  placeholder="请输入金额单位（元/万元）"></el-input>
+                                            <el-input v-model="data.dataProp.dataUnit" size="mini"  placeholder="请输入金额单位（元/万元）"></el-input>
                                          </el-form-item>
                                     </span>
 
@@ -198,7 +205,7 @@
                         <span v-if="computeList.length >0">
                             <el-tag v-for="(item,index) in computeList" :key="index"
                                     class="tag-item"
-                                    style="">
+                                    @click="addItemBtn(item,index)">
                                 {{item.name}}:{{item.alias}}
                             </el-tag>
                         </span>
@@ -210,24 +217,35 @@
                     <el-form-item label="计算符选择" label-width="120px" >
                         <el-tag v-for="(item,index) in signList" :key="index"
                                 class="tag-sign"
+                                @click="addSign(item)"
                                 type="danger" size="small" >
                             {{item}}
                         </el-tag>
                     </el-form-item>
                     <el-form-item label="生成计算公式" label-width="120px" >
+                            <!--<el-tag type="success" size="small" style="margin: 10px 0 0 10px;cursor: pointer;" >-->
+                                <!--1111-->
+                            <!--</el-tag>-->
+                                <!--+-->
+                            <span>
+                                {{formulaData}}
+                            </span>
 
                     </el-form-item>
                 </el-form>
             </div>
             <div slot="footer" class="dialog-footer">
                 <el-button @click="showFormula = false">取 消</el-button>
-                <el-button type="primary" @click="showFormula = false">确 定</el-button>
+                <el-button type="primary" @click="resetCompute">重置计算公式</el-button>
+                <el-button type="primary" @click="setFormulaBtn">确 定</el-button>
             </div>
         </el-dialog>
     </div>
 </template>
 
 <script>
+
+
     export default {
         name: "formDesign",
         data() {
@@ -254,8 +272,10 @@
                     columnType: 'data',   //数据列还是计算列
                     dataType: '',          //数据类型
                     remark:'',            //备注
-                    formula:'',            //公式
-                    rule: {
+                    dataUnit:'',            //单位
+                    computeFormula:'',            //公式
+                    selections:'',              //选项
+                    dataProp: {
                         length: '',      //数据位数
                         decimals: '',    //小数位数
                         intRules: '',    //取整规则
@@ -264,14 +284,27 @@
                         dataUnit:'',      //金额单位
                     },
                 },
+                tableAlias:'',
+                tableType:'0',
                 tableData:[],
                 changeIndex:-1,
 
                 showFormula:false,
                 computeList:[],
+
+                formulaData:'',     //公式临时变量
             }
         },
         methods: {
+
+            /**测试计算公式*/
+            formulaBtn(_index){
+                let item ={pop:300,sum:10000,pp:100,time:'3季度',money:'222'}
+                console.log(this.$commen)
+                let res = this.$commen.getFormulaResult(item,this.tableData[_index].computeFormula)
+                console.log(res)
+            },
+
             /** 重置变量值*/
             resetData(){
                 let obj = {
@@ -281,15 +314,17 @@
                     columnType: 'data',   //数据列还是计算列
                     dataType: '',          //数据类型
                     remark:'',            //备注
-                    formula:'',            //公式
-                    rule: {
+                    dataUnit:'',            //单位
+                    computeFormula:'',            //公式
+                    dataProp: {
                         length: '',      //数据位数
                         decimals: '',    //小数位数
                         intRules: '',    //取整规则
                         start: '',       //开始日期
                         end: '',         //截止日期
                         dataUnit:''     //金额单位
-                    }
+                    },
+                    selections:'',      //选项
                 }
                 this.data = JSON.parse(JSON.stringify(obj))
             },
@@ -297,26 +332,28 @@
              * 改变取整规则
              * */
             changeIntRules(){
-                if( this.data.rule.decimals != 0){
-                    this.data.rule.intRules = 0
+                if( this.data.dataProp.decimals != 0){
+                    this.data.dataProp.intRules = 0
                 }
             },
             /** 改变小数位*/
             changeDecimals(){
-                if( this.data.rule.intRules != 0){
-                    this.data.rule.decimals = 0
+                if( this.data.dataProp.intRules != 0){
+                    this.data.dataProp.decimals = 0
                 }
             },
             /** 更改数据类型改变默认值*/
             changeDataType(){
-                this.data.rule.length = ''
-                this.data.rule.decimals = ''
-                this.data.rule.intRules = ''
-                this.data.rule.start = ''
-                this.data.rule.end = ''
-                this.data.rule.dataUnit = ''
+                this.data.dataProp.length = ''
+                this.data.dataProp.decimals = ''
+                this.data.dataProp.intRules = ''
+                this.data.dataProp.start = ''
+                this.data.dataProp.end = ''
+                this.data.dataProp.dataUnit = ''
                 this.data.columnType = 'data'
                 this.data.formula = ''
+                this.formulaData = ''
+
             },
             /** 完成字段配置 更改原表配置 进行赋值*/
             completeBtn(){
@@ -387,13 +424,7 @@
 
             /** 设置公式弹出层*/
             setPormulaBtn(){
-                for(let i =0;i<this.tableData.length;i++){
-                    if(this.tableData[i].dataType == 'int' || this.tableData[i].dataType == 'decimal' || this.tableData[i].dataType == 'money'){
-                        let obj = JSON.parse(JSON.stringify(this.tableData[i]))
-                        /** 需要满足 当前字段没有成为 其他的字段中的计算公式的 子项*/
-                        this.computeList.push(obj)
-                    }
-                }
+                this.resetCompute()
                 this.showFormula = true
                 console.log(this.computeList)
             },
@@ -404,22 +435,100 @@
                 this.resetData()
             },
 
-            /** 保存数据配置*/
+            /** 创建表单*/
             saveBtn(){
 
-                console.log(this.tableData)
-            }
+                let cnt = {
+                    alias:this.tableAlias,
+                    type:this.tableType,
+                    columns:this.tableData
+                }
+
+                this.$api.createTableSchema(cnt,(res)=>{
+                    console.log(res)
+                })
+                console.log(cnt)
+            },
+            /** 添加节点进入公式*/
+            addItemBtn(item,_index){
+                let str ='{{'+item.name+'}}'
+                console.log(_index)
+                let res =  this.setCompute(str,0)
+
+                // 需要考虑到底字段能不能重复被选择
+                // if(res){
+                //     this.computeList.splice(_index,1)
+                // }else{
+                //     this.$message.error('出错了！')
+                // }
+                if(res == false){
+                    this.$message.error('出错了！')
+                }
+            },
+            /** 选择运算符*/
+            addSign(item){
+                let res  = this.setCompute(item,1)
+                if(!res){
+                    this.$message.error('出错了')
+                }
+            },
+
+            /** 设置公式
+             * item 具体节点（字段/运算符）
+             * key  0:字段 1:运算符
+             * */
+            setCompute(item,key){
+                if(key == 0){
+                    console.log()
+                    if(this.formulaData.substr(this.formulaData.length-1,1) == '}'){
+                        return false
+                    }else{
+                        this.formulaData = this.formulaData+item
+                        return true
+                    }
+                }else {
+                    if(this.formulaData.substr(this.formulaData.length-1,1) == '}'){
+                        this.formulaData = this.formulaData+item
+                        return true
+                    }else{
+                        return false
+                    }
+                }
+            },
+
+            /**  */
+            setFormulaBtn(){
+                this.data.formula = this.formulaData
+                this.formulaData = ''
+                this.showFormula = false
+
+            },
+            /** 重置计算公式,重新计算可选项*/
+            resetCompute(){
+                this.formulaData = ''
+                this.computeList = []
+                for(let i =0;i<this.tableData.length;i++){
+                    if(this.tableData[i].dataType == 'int' || this.tableData[i].dataType == 'decimal' || this.tableData[i].dataType == 'money'){
+                        let obj = JSON.parse(JSON.stringify(this.tableData[i]))
+                        /** 需要满足 当前字段没有成为 其他的字段中的计算公式的 子项    如果是修改操作可能已经有部分字段已经加入到那个字段*/
+                        this.computeList.push(obj)
+                    }
+                }
+            },
+
+            /** 创建表格*/
 
 
         },
         mounted() {
+
             this.menuForm.height = this.$refs.menuBox.offsetHeight - 30 + 'px'
             this.tableData=[
-                { name: 'time', alias: '季度', necessary:'0', columnType: 'data', dataType: 'string', remark:'', formula:'', rule: {length: '20', decimals: '', intRules: '', start: '', end: '', dataUnit:''}},
-                {name: 'pop', alias: '单价', necessary:'0', columnType: 'data', dataType: 'decimal', remark:'', formula:'', rule: {length: '', decimals: '2', intRules: '', start: '', end: '', dataUnit:''}},
-                {name: 'sum', alias: '销售量', necessary:'0', columnType: 'data', dataType: 'int', remark:'', formula:'', rule: {length: '5', decimals: '', intRules: '', start: '', end: '', dataUnit:''}},
-                {name: 'pp', alias: '成本', necessary:'0', columnType: 'data', dataType: 'decimal', remark:'', formula:'', rule: {length: '', decimals: '2', intRules: '', start: '', end: '', dataUnit:''}},
-
+                { name: 'time', alias: '季度', necessary:'0', columnType: 'data', dataType: 'string', remark:'', computeFormula:'', dataProp: {length: '20', decimals: '', intRules: '', start: '', end: '', dataUnit:''}},
+                {name: 'pop', alias: '单价', necessary:'0', columnType: 'data', dataType: 'decimal', remark:'', computeFormula:'', dataProp: {length: '', decimals: '2', intRules: '', start: '', end: '', dataUnit:''}},
+                {name: 'sum', alias: '销售量', necessary:'0', columnType: 'data', dataType: 'int', remark:'', computeFormula:'', dataProp: {length: '5', decimals: '', intRules: '', start: '', end: '', dataUnit:''}},
+                {name: 'pp', alias: '成本', necessary:'0', columnType: 'data', dataType: 'decimal', remark:'', computeFormula:'', dataProp: {length: '', decimals: '2', intRules: '', start: '', end: '', dataUnit:''}},
+                {name:'money',alias:'利润',necessary:'0',columnType:'compute', dataType: 'decimal', remark:'', computeFormula:'({{pop}}-{{pp}})*{{sum}}', dataProp: {length: '', decimals: '2', intRules: '', start: '', end: '', dataUnit:''}}
             ]
         }
     }
@@ -441,7 +550,7 @@
 
     .form-title {
         width: auto;
-        height: 40px;
+        height: 80px;
         background: #fff;
         line-height: 40px;
         font-size: 16px;
