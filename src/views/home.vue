@@ -1,8 +1,6 @@
 <template>
 	<div class="box">
-		<video autoplay loop id="bgvid" muted>
-			<source src="http://datavision.oss-cn-hangzhou.aliyuncs.com/bg.mp4" type="video/mp4">
-		</video>
+		
 		<div id="polina">
 			<h1 style="text-align: center">让数据栩栩如生</h1>
 			<p style="text-align: center;margin-top: 20px">致力于表单引擎与数据可视化分析引擎</p>
